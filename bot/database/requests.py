@@ -2,7 +2,7 @@ import datetime
 
 from aiogram import types
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import update
+from sqlalchemy import update, select
 
 from database import User
 
@@ -85,3 +85,26 @@ async def user_is_active(user_id: int, session: AsyncSession) -> bool:
 async def user_is_registered(user_id: int, session: AsyncSession) -> bool:
     user: User = await get_user(user_id=user_id, session=session)
     return bool(user.is_registered)
+
+
+async def get_users(session: AsyncSession):
+    users = await session.execute(select(User))
+    return users.scalars()
+
+
+async def ban_user(user_id: int, session: AsyncSession):
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == user_id)
+        .values(is_banned=True)
+    )
+    await session.commit()
+
+
+async def unban_user(user_id: int, session: AsyncSession):
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == user_id)
+        .values(is_banned=False)
+    )
+    await session.commit()

@@ -8,27 +8,48 @@ from filters import IsNotBanned
 from database import User
 from loader import bot, dp
 from keyboards.default import main_kbd
-from keyboards.inline import request_kbd, back_to_main_kbd
+from keyboards.inline import request_kbd, back_to_main_kbd, skip_back_kbd
 from database import requests
 from states import UserLeaveRequestState
 from utils import fio_format_editor, phone_format_editor
 
 
-# to do keyboard, mediagroup handler, caption length
+# TODO keyboard, mediagroup handler, caption length
+
+
+
+# print(message_id.message_id)
+
+
+
+@dp.callback_query_handler(text='request_skip', state=UserLeaveRequestState.address)
+async def skip_address(call: types.CallbackQuery, state: FSMContext):
+    await call.message.delete()
+    text = '<i><b>Шаг 2/3</b></i>. 🖼Прикрепите фотографию или видео к своей заявке или пропустите этот пункт:'
+    await call.message.answer(text=text, reply_markup=skip_back_kbd(skip=True, back=True))
+    await UserLeaveRequestState.media.set()
+
 
 @dp.message_handler(state=UserLeaveRequestState.address)
 async def request_address(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['address'] = message.text
     text = '<i><b>Шаг 2/3</b></i>. 🖼Прикрепите фотографию или видео к своей заявке или пропустите этот пункт:'
-    await message.answer(text=text)
+    await message.answer(text=text, reply_markup=skip_back_kbd(skip=True, back=True))
     await UserLeaveRequestState.media.set()
+
+
+@dp.callback_query_handler(text='request_skip', state=UserLeaveRequestState.media)
+async def skip_media(call: types.CallbackQuery, state: FSMContext):
+    await call.message.delete()
+    text = '<i><b>Шаг 3/3.</b></i> 📛Напишите причину обращения в подробностях:'
+    await call.message.answer(text=text, reply_markup=skip_back_kbd(back=True))
+    await UserLeaveRequestState.reason.set()
 
 
 @dp.message_handler(content_types=types.ContentTypes.ANY, state=UserLeaveRequestState.media)
 async def request_media(message: types.Message, state: FSMContext):
-    # print(bool(message.video))
-
+    data = await state.get_data()
     if message.content_type not in ['photo', 'video']:
         text = f'⛔️📛 В данном пункте нужно обязательно отправить <b>фотографию</b> или <b>видео</b> ' \
                f'в виде медиа-сообщения. <i><b>Попробуйте еще раз</b>:</i>'
@@ -45,8 +66,8 @@ async def request_media(message: types.Message, state: FSMContext):
 
         async with state.proxy() as data:
             data['media'] = media
-        text = '<i><b>Шаг 3/3</b></i>. 📛Напишите причину обращения в подробностях:'
-        await message.answer(text=text)
+        text = '<i><b>Шаг 3/3.</b></i> 📛Напишите причину обращения в подробностях:'
+        await message.answer(text=text, reply_markup=skip_back_kbd(back=True))
         await UserLeaveRequestState.reason.set()
 
 
@@ -64,10 +85,10 @@ async def request_reason(message: types.Message, session: AsyncSession, state: F
     text_admin = f'<b>⛔Поступила новая жалоба</b>\n<a href="tg://user?id={user.telegram_id}">{username}</a>\n' \
                  f'<i><b>Имя и Фамилия:</b></i> {user.fio}\n' \
                  f'<i><b>Номер телефона:</b></i> {user.phone_number}\n' \
-                 f'<i><b>Адрес:</b></i> {data["address"]}\n' \
-                 f'<i><b>Содержание:</b></i> {data["reason"]}'
+                 f'<i><b>Адрес:</b></i> {data.get("address", "Не указан")}\n' \
+                 f'<i><b>Содержание:</b></i> {data.get("reason", "Не указано")}'
 
-    if data['media']:
+    if data.get('media'):
         media, file_id = data['media'].split()
         if media == 'photo':
             await bot.send_photo(chat_id=ADMIN, photo=file_id, caption=text_admin)
@@ -75,3 +96,19 @@ async def request_reason(message: types.Message, session: AsyncSession, state: F
             await bot.send_video(chat_id=ADMIN, video=file_id, caption=text_admin)
     else:
         await bot.send_message(chat_id=ADMIN, text=text_admin)
+
+
+@dp.callback_query_handler(text='request_back', state='*')
+async def request_back(call: types.CallbackQuery, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state == UserLeaveRequestState.media.state:
+        await call.message.delete()
+        text = '<i><b>Шаг 1/3</b></i>. 📓 Напишите адрес или ориентир проблемы (улицу, номер дома, ' \
+               'подъезд, этаж и квартиру) или пропустите этот пункт:'
+        kbd = skip_back_kbd(skip=True, to_main=True)
+        await call.message.answer(text=text, reply_markup=kbd)
+        await UserLeaveRequestState.address.set()
+    elif current_state == UserLeaveRequestState.reason.state:
+        await skip_address(call=call, state=state)
+
+

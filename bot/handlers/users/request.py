@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from filters import IsNotBanned
 from loader import bot, dp
 from keyboards.default import main_kbd
-from keyboards.inline import request_kbd, back_to_main_kbd
+from keyboards.inline import request_kbd, back_to_main_kbd, skip_back_kbd
 from database import requests
 from states import UserSuggestionState, UserLeaveRequestState
 from utils import fio_format_editor, phone_format_editor
@@ -33,7 +33,7 @@ async def request_info(call: types.CallbackQuery, state: FSMContext):
         text = '<i><b>Шаг 1/3</b></i>. 📓 Напишите адрес или ориентир проблемы (улицу, номер дома, ' \
                'подъезд, этаж и квартиру) или пропустите этот пункт:'
         await UserLeaveRequestState.address.set()
-        kbd = back_to_main_kbd
+        kbd = skip_back_kbd(skip=True, to_main=True)
 
     elif call_data == 'suggestion':
         text = '💡 <i><b>Распишите Ваше предложение в подробностях: (Добавьте фотографию, если есть)</b></i>'
