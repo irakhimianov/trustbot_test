@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.config import ADMIN
 from filters import IsNotBanned
-from bot.database import User
-from bot.loader import bot, dp
+from database import User
+from loader import bot, dp
 from keyboards.default import main_kbd
 from keyboards.inline import request_kbd, back_to_main_kbd
 from database import requests
@@ -14,7 +14,7 @@ from states import UserLeaveRequestState
 from utils import fio_format_editor, phone_format_editor
 
 
-#TODO keyboard, mediagroup handler, caption length
+# to do keyboard, mediagroup handler, caption length
 
 @dp.message_handler(state=UserLeaveRequestState.address)
 async def request_address(message: types.Message, state: FSMContext):
@@ -22,11 +22,14 @@ async def request_address(message: types.Message, state: FSMContext):
         data['address'] = message.text
     text = '<i><b>Шаг 2/3</b></i>. 🖼Прикрепите фотографию или видео к своей заявке или пропустите этот пункт:'
     await message.answer(text=text)
+    await UserLeaveRequestState.media.set()
 
 
-@dp.message_handler(state=UserLeaveRequestState.media)
+@dp.message_handler(content_types=types.ContentTypes.ANY, state=UserLeaveRequestState.media)
 async def request_media(message: types.Message, state: FSMContext):
-    if not message.photo or not message.video:
+    # print(bool(message.video))
+
+    if message.content_type not in ['photo', 'video']:
         text = f'⛔️📛 В данном пункте нужно обязательно отправить <b>фотографию</b> или <b>видео</b> ' \
                f'в виде медиа-сообщения. <i><b>Попробуйте еще раз</b>:</i>'
         await message.answer(text=text)
@@ -47,19 +50,19 @@ async def request_media(message: types.Message, state: FSMContext):
         await UserLeaveRequestState.reason.set()
 
 
-@dp.message_handler(state=UserLeaveRequestState.media)
+@dp.message_handler(state=UserLeaveRequestState.reason)
 async def request_reason(message: types.Message, session: AsyncSession, state: FSMContext):
     async with state.proxy() as data:
         data['reason'] = message.text
     user: User = await requests.get_user(user_id=message.from_user.id, session=session)
     username = user.username if user.username else 'Пользователь'
     data = await state.get_data()
-    text = '✅<b>Жалоба отправлена адмнистрации.</b> <i>Спасибо за Ваше обращение!</i>'
+    text = '✅<b>Жалоба отправлена администрации.</b> <i>Спасибо за Ваше обращение!</i>'
     await message.answer(text=text)
     await state.finish()
 
     text_admin = f'<b>⛔Поступила новая жалоба</b>\n<a href="tg://user?id={user.telegram_id}">{username}</a>\n' \
-                 f'<i><b>Имя и Фамилия:</b</i>> {user.fio}\n' \
+                 f'<i><b>Имя и Фамилия:</b></i> {user.fio}\n' \
                  f'<i><b>Номер телефона:</b></i> {user.phone_number}\n' \
                  f'<i><b>Адрес:</b></i> {data["address"]}\n' \
                  f'<i><b>Содержание:</b></i> {data["reason"]}'

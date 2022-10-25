@@ -27,6 +27,8 @@ async def cmd_leave_request(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(text_contains='request_')
 async def request_info(call: types.CallbackQuery, state: FSMContext):
     call_data = call.data.split('_')[-1]
+    data = await state.get_state()
+    print(data)
     if call_data == 'leave':
         text = '<i><b>Шаг 1/3</b></i>. 📓 Напишите адрес или ориентир проблемы (улицу, номер дома, ' \
                'подъезд, этаж и квартиру) или пропустите этот пункт:'
@@ -44,7 +46,8 @@ async def request_info(call: types.CallbackQuery, state: FSMContext):
         message_id=call.message.message_id,
         reply_markup=kbd
     )
+
     # async with state.proxy() as data:
     #     data['chat_id'] = call.message.chat.id
     #     data['last_message_id'] = call.message.message_id
-    await bot.answer_callback_query(callback_query_id=call.id)
+    # await bot.answer_callback_query(callback_query_id=call.id)
