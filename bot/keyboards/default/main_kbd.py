@@ -1,7 +1,7 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 
-main_kbd = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
+main_kbd = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
 buttons = [
     KeyboardButton(text='📛 Оставить заявку'),
     KeyboardButton(text='📞 Связаться'),

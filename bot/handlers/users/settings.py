@@ -1,15 +1,10 @@
 from aiogram import types
-from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher.storage import FSMContext
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from filters import IsNotBanned
-from loader import bot, dp
-from keyboards.default import main_kbd
 from keyboards.inline import settings_kbd, cancel_kbd
-from database import requests
+from loader import bot, dp
 from states import UserSettingsState
-from utils import fio_format_editor, phone_format_editor
 
 
 @dp.message_handler(IsNotBanned(), text='⚙ Настройки')
@@ -28,7 +23,7 @@ async def cmd_settings(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text_contains='update_')
 @dp.callback_query_handler(text='recall_update_phone')
-async def settings_update_info(call: types.CallbackQuery, state: FSMContext):
+async def settings_update_info(call: types.CallbackQuery):
     call_data = call.data.split('_')[-1]
     if call_data == 'fio':
         text = '🛠 <i>Отправьте свое <b>Имя</b> и <b>Фамилию</b>, чтобы поменять настройки:</i>'
@@ -42,7 +37,4 @@ async def settings_update_info(call: types.CallbackQuery, state: FSMContext):
         message_id=call.message.message_id,
         reply_markup=cancel_kbd
     )
-    async with state.proxy() as data:
-        data['chat_id'] = call.message.chat.id
-        data['last_message_id'] = call.message.message_id
     await bot.answer_callback_query(callback_query_id=call.id)

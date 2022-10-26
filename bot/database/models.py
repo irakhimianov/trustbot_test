@@ -19,3 +19,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_registered = Column(Boolean, default=False)
     registration_date = Column(DateTime, default=datetime.now())
+
+    def __repr__(self):
+        return f'<USER>: {self.telegram_id} {self.username} {self.fio} {self.phone_number} ' \
+               f'{self.is_banned=} {self.is_active=} {self.is_registered=}'

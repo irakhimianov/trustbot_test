@@ -1,9 +1,8 @@
 from aiogram import types
-from aiogram.dispatcher.filters.builtin import CommandStart
 
 from filters import IsNotBanned
-from loader import bot, dp
 from keyboards.default import main_kbd
+from loader import bot, dp
 
 
 @dp.message_handler(IsNotBanned(), text='☎ Полезные контакты')
@@ -30,5 +29,5 @@ async def cmd_useful_contacts(message: types.Message):
     text = text
     await message.answer(
         text=text,
-        reply_markup=main_kbd,
+        reply_markup=main_kbd
     )

@@ -18,7 +18,7 @@ async def update_fio(message: types.Message, session: AsyncSession, state: FSMCo
     fio = fio_format_editor(fio=message.text)
     data = await state.get_data()
     if not fio:
-        text = f'📛 <b>Имя</b> и <b>Фамилия</b> должны быть введены через один пробел, и должны быть написаны через ' \
+        text = f'📛<b>Имя</b> и <b>Фамилия</b> должны быть введены через один пробел, и должны быть написаны через ' \
                f'кириллицу. Также должны начинаться с заглавных букв. <b>Учтите формат и попробуйте снова:</b>'
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.edit_message_text(
@@ -44,7 +44,7 @@ async def update_phone(message: types.Message, session: AsyncSession, state: FSM
     phone_number = phone_format_editor(phone_number=message.text)
     data = await state.get_data()
     if not phone_number:
-        text = f'📛 Номер телефона должен содержать 11 цифр и должен обязательно содержать +7 в начале.' \
+        text = f'📛Номер телефона должен содержать 11 цифр и должен обязательно содержать +7 в начале.' \
                f'<b>Учтите формат и попробуйте снова:</b>'
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.edit_message_text(

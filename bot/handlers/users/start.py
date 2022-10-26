@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher.storage import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from loader import dp
+from loader import dp, bot
 from filters import IsNotBanned
 from keyboards.default import main_kbd
 from database import requests
@@ -16,7 +16,9 @@ async def cmd_start(message: types.Message, session: AsyncSession, state: FSMCon
     user_id = message.from_user.id
     user_is_registered = await requests.user_is_registered(user_id=user_id, session=session)
     if user_is_registered:
-        text = 'Добро пожаловать в главное меню чат-бота Управляющей компании УЭР-ЮГ'
+        text = f'✈<b>Добро пожаловать</b> <i>в главное меню чат-бота Управляющей компании "УЭР-ЮГ"</i>. ' \
+               f'Здесь вы можете оставить заявку для управляющей компании или направить свое предложение по управлению домом. ' \
+               f'Просто воспользуйтесь кнопками <b><i>меню</i></b>, чтобы взаимодействовать с функциями бота:'
         await message.answer(
             text=text,
             reply_markup=main_kbd,

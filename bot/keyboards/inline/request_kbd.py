@@ -14,8 +14,8 @@ request_kbd.add(back_to_main)
 
 def skip_back_kbd(*, skip: bool = False, back: bool = False, to_main: bool = False):
     kbd = InlineKeyboardMarkup(row_width=1)
-    skip_btn = InlineKeyboardButton(text='Пропустить', callback_data='request_skip')
-    back_btn = InlineKeyboardButton(text='Назад', callback_data='request_back')
+    skip_btn = InlineKeyboardButton(text='▶ Пропустить', callback_data='request_skip')
+    back_btn = InlineKeyboardButton(text='🔙 Назад', callback_data='request_back')
     if skip and back:
         buttons = (skip_btn, back_btn)
     elif skip and to_main:
