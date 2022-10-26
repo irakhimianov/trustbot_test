@@ -52,24 +52,6 @@ async def update_user(
     await session.commit()
 
 
-async def update_user_fio(*, user_id: int, session: AsyncSession, fio: str):
-    await session.execute(
-        update(User)
-        .where(User.telegram_id == user_id)
-        .values(fio=fio)
-    )
-    await session.commit()
-
-
-async def update_user_phone_number(*, user_id: int, session: AsyncSession, phone_number: str):
-    await session.execute(
-        update(User)
-        .where(User.telegram_id == user_id)
-        .values(phone_number=phone_number)
-    )
-    await session.commit()
-
-
 async def user_is_banned(user_id: int, session: AsyncSession) -> bool:
     user: User = await get_user(user_id=user_id, session=session)
     if user:
@@ -91,6 +73,25 @@ async def get_users(session: AsyncSession):
     users = await session.execute(select(User))
     return users.scalars()
 
+# TODO refactor through update_user()
+
+async def update_user_fio(*, user_id: int, session: AsyncSession, fio: str):
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == user_id)
+        .values(fio=fio)
+    )
+    await session.commit()
+
+
+async def update_user_phone_number(*, user_id: int, session: AsyncSession, phone_number: str):
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == user_id)
+        .values(phone_number=phone_number)
+    )
+    await session.commit()
+
 
 async def ban_user(user_id: int, session: AsyncSession):
     await session.execute(
@@ -106,5 +107,23 @@ async def unban_user(user_id: int, session: AsyncSession):
         update(User)
         .where(User.telegram_id == user_id)
         .values(is_banned=False)
+    )
+    await session.commit()
+
+
+async def activate_user(user_id: int, session: AsyncSession):
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == user_id)
+        .values(is_active=True)
+    )
+    await session.commit()
+
+
+async def deactivate_user(user_id: int, session: AsyncSession):
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == user_id)
+        .values(is_active=False)
     )
     await session.commit()

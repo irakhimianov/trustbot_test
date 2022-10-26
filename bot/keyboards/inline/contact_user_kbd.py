@@ -10,9 +10,9 @@ buttons = [
 contact_user_kbd.add(*buttons)
 contact_user_kbd.add(back_to_main)
 
-recall_kbd = InlineKeyboardMarkup(row_width=2)
+recall_kbd = InlineKeyboardMarkup(row_width=1)
 buttons = [
-    InlineKeyboardButton(text='Да', callback_data='recall_confirm'),
-    InlineKeyboardButton(text='Оставить номер телефона', callback_data='recall_update_phone')
+    InlineKeyboardButton(text='✅ Да', callback_data='recall_confirm'),
+    InlineKeyboardButton(text='🛠 Изменить номер телефона', callback_data='recall_update_phone')
 ]
 recall_kbd.add(*buttons)

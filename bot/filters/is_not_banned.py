@@ -19,4 +19,5 @@ class IsNotBanned(BoundFilter):
         banned: bool = await user_is_banned(user_id=user_id, session=session)
         if banned:
             await bot.send_message(text='Вы забанены', chat_id=user_id)
-        return not banned
+        else:
+            return not banned
