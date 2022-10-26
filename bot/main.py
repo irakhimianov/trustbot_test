@@ -4,6 +4,7 @@ import logging
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
+from data import config
 import handlers
 from loader import dp, bot
 from utils import on_startup_notify, set_default_commands
@@ -19,6 +20,9 @@ async def on_startup():
     # DB
     logging.info('DB connecting...')
     db_engine = create_async_engine(url='sqlite+aiosqlite:///db.db')
+    # PSQL support
+    # url = f'postgresql+asyncpg://{config.PG_USER}:{config.PG_PASSWORD}@{config.PG_HOST}:{config.PG_PORT}/{config.PG_DB}'
+    # db_engine = create_async_engine(url=url)
     async with db_engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
     db_factory = sessionmaker(bind=db_engine, class_=AsyncSession, expire_on_commit=False)
