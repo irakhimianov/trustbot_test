@@ -1,8 +1,10 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from keyboards.default import main_kbd
 from loader import dp, bot
+from .start import cmd_start
 
 
 @dp.callback_query_handler(text_contains='cancel', state='*')
@@ -28,7 +30,7 @@ async def cmd_cancel(call: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(commands=['cancel'], state='*')
-async def cmd_cancel(message: types.Message, state: FSMContext):
+async def cmd_cancel(message: types.Message, session: AsyncSession, state: FSMContext):
     if await state.get_state():
         data = await state.get_data()
         if data.get('chat_id') and data.get('last_message_id'):
@@ -38,8 +40,5 @@ async def cmd_cancel(message: types.Message, state: FSMContext):
             )
         await state.finish()
     text = '❌<b>Последняя операция отменена</b>'
-    await bot.send_message(
-        chat_id=message.chat.id,
-        text=text,
-        reply_markup=main_kbd
-    )
+    await bot.send_message(chat_id=message.chat.id, text=text)
+    await cmd_start(message=message, session=session, state=state)
