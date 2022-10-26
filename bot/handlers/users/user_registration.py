@@ -1,15 +1,13 @@
 from aiogram import types
-from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher.storage import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database import requests
 from filters import IsNotBanned
 from loader import bot, dp
-from keyboards.default import main_kbd, phone_number_kbd
-from database import requests
+from .start import cmd_start
 from states import UserRegistrationState
 from utils import fio_format_editor, phone_format_editor
-from .start import cmd_start
 
 
 @dp.message_handler(IsNotBanned(), state=UserRegistrationState.fio)
@@ -17,10 +15,11 @@ async def registration_fio(message: types.Message, state: FSMContext):
     # message.text fio check
     fio = fio_format_editor(fio=message.text)
     if not fio:
-        text = f'📛 <b>Имя</b> и <b>Фамилия</b> должны быть введены через один пробел, и должны быть написаны через ' \
-               f'кириллицу. Также должны начинаться с заглавных букв. <b>Учтите формат и попробуйте снова:</b>'
+        text = f'⛔️📛<b>Имя</b> и <b>Фамилия</b> должны быть введены через один <i>пробел,</i>' \
+               f' и должны быть написаны через <i>кириллицу</i>. Также должны начинаться с заглавных букв. ' \
+               f'<b>Учтите формат и попробуйте снова:</b>'
     else:
-        text = 'Теперь отправьте Ваш номер телефона через +7 следующим сообщением'
+        text = '📞 Теперь отправьте Ваш <b>номер телефона</b> через <b>+7</b> следующим сообщением'
         await UserRegistrationState.next()
         async with state.proxy() as data:
             data['fio'] = fio
@@ -47,8 +46,8 @@ async def registration_phone_number(message: types.Message, session: AsyncSessio
 
     phone_number = phone_format_editor(phone_number=message.text)
     if not phone_number:
-        text = f'📛 Номер телефона должен содержать 11 цифр и должен обязательно содержать +7 в начале.' \
-               f'<b>Учтите формат и попробуйте снова:</b>'
+        text = f'⛔️📛⛔️<b>Номер телефона</b> должен содержать 11 цифр и должен обязательно содержать ' \
+               f'в начале <b>+7. Учтите формат и попробуйте снова:</b>'
         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
         await bot.edit_message_text(
             text=text,

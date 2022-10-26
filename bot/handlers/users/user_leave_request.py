@@ -1,5 +1,4 @@
 from aiogram import types
-from aiogram.dispatcher.filters.builtin import CommandStart
 from aiogram.dispatcher.storage import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,13 +13,7 @@ from states import UserLeaveRequestState
 from utils import fio_format_editor, phone_format_editor
 
 
-# TODO keyboard, mediagroup handler, caption length
-
-
-
-# print(message_id.message_id)
-
-
+# TODO mediagroup handler, caption length
 
 @dp.callback_query_handler(text='request_skip', state=UserLeaveRequestState.address)
 async def skip_address(call: types.CallbackQuery, state: FSMContext):
@@ -28,10 +21,14 @@ async def skip_address(call: types.CallbackQuery, state: FSMContext):
     text = '<i><b>Шаг 2/3</b></i>. 🖼Прикрепите фотографию или видео к своей заявке или пропустите этот пункт:'
     await call.message.answer(text=text, reply_markup=skip_back_kbd(skip=True, back=True))
     await UserLeaveRequestState.media.set()
+    await bot.answer_callback_query(callback_query_id=call.id)
 
 
 @dp.message_handler(state=UserLeaveRequestState.address)
 async def request_address(message: types.Message, state: FSMContext):
+    if len(message.text) > 4000:
+        text = '📛 Длина сообщения более 4000 символов, что не допустимо! Попробуйте еще раз:'
+        return await message.reply(text=text)
     async with state.proxy() as data:
         data['address'] = message.text
     text = '<i><b>Шаг 2/3</b></i>. 🖼Прикрепите фотографию или видео к своей заявке или пропустите этот пункт:'
@@ -40,11 +37,12 @@ async def request_address(message: types.Message, state: FSMContext):
 
 
 @dp.callback_query_handler(text='request_skip', state=UserLeaveRequestState.media)
-async def skip_media(call: types.CallbackQuery, state: FSMContext):
+async def skip_media(call: types.CallbackQuery):
     await call.message.delete()
     text = '<i><b>Шаг 3/3.</b></i> 📛Напишите причину обращения в подробностях:'
     await call.message.answer(text=text, reply_markup=skip_back_kbd(back=True))
     await UserLeaveRequestState.reason.set()
+    await bot.answer_callback_query(callback_query_id=call.id)
 
 
 @dp.message_handler(content_types=types.ContentTypes.ANY, state=UserLeaveRequestState.media)
@@ -59,11 +57,13 @@ async def request_media(message: types.Message, state: FSMContext):
             message_id=message.message_id
         )
     else:
+        if len(message.caption) > 1000:
+            text = '📛 Длина подписи файла более 1000 символов, что не допустимо! Попробуйте еще раз:'
+            return await message.reply(text=text)
         if message.photo:
             media = f'photo {message.photo[-1].file_id}'
         elif message.video:
             media = f'video {message.video.file_id}'
-
         async with state.proxy() as data:
             data['media'] = media
         text = '<i><b>Шаг 3/3.</b></i> 📛Напишите причину обращения в подробностях:'
@@ -73,6 +73,9 @@ async def request_media(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=UserLeaveRequestState.reason)
 async def request_reason(message: types.Message, session: AsyncSession, state: FSMContext):
+    if len(message.text) > 4000:
+        text = '📛 Длина сообщения более 4000 символов, что не допустимо! Попробуйте еще раз:'
+        return await message.reply(text=text)
     async with state.proxy() as data:
         data['reason'] = message.text
     user: User = await requests.get_user(user_id=message.from_user.id, session=session)
@@ -110,5 +113,4 @@ async def request_back(call: types.CallbackQuery, state: FSMContext):
         await UserLeaveRequestState.address.set()
     elif current_state == UserLeaveRequestState.reason.state:
         await skip_address(call=call, state=state)
-
-
+    await bot.answer_callback_query(callback_query_id=call.id)
